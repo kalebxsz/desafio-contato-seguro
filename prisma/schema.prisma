@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Canal {
+  OUVIDORIA
+  SAC
+  SUPORTE_TECNICO
+  FINANCEIRO
+  FORA_DO_ESCOPO
+}
+
+enum Prioridade {
+  ALTA
+  MEDIA
+  BAIXA
+}
+enum Status {
+  ABERTO 
+  EM_ANDAMENTO
+  FINALIZADO
+}
+
+model User {
+  id Int @id @default(autoincrement())  // o id será 1, 2, 3 automaticamente 
+  name String // será apenas 'Kaleb' qualquer String
+  email String @unique   // Só pode cadastrar um email por usuário
+  password String  // senha do tipo String
+  createdAt DateTime @default(now())   // criado no dia/hora tal
+  updatedAt DateTime @updatedAt    // atualizado no dia/hora tal
+
+  tickets Ticket[]
+}
+
+model Ticket {
+  id Int @id @default(autoincrement())
+  title String
+  description  String
+  channel Canal
+  priority Prioridade
+  status Status @default(ABERTO)
+  manualReview  Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  
+}
