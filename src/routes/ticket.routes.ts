@@ -11,6 +11,6 @@ router.get("/", ticketController.findAll);
 
 router.get("/:id", ticketController.findById);
 
-router.put("/:id/status", ticketController.updateStatus);
+router.patch("/:id/status", ticketController.updateStatus);
 
 export default router;
