@@ -10,37 +10,29 @@ export class UserController {
     create = async (req: Request, res: Response) => {
 
     try {
-
         const { name, email, password } = req.body;
-
         if (!name || !email || !password) {
             return res.status(400).json({
                 message: "Nome, email e senha são obrigatórios"
             });
         }
-
         const user = await this.userService.create(
             name,
             email,
             password
-        );
-
+        )
         return res.status(201).json(user);
 
     } catch (error: any) {
-
         if (error.message === "EMAIL_ALREADY_EXISTS") {
             return res.status(409).json({
                 message: "Email já cadastrado"
             });
         }
-
         return res.status(500).json({
             message: "Erro interno do servidor"
         });
-
     }
-
 }
 
     //buscar usuarios 

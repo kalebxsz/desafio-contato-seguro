@@ -24,7 +24,7 @@ export class TicketClassifier {
             "acesso",
             "bug",
             "falha",
-            "instabilidade", 
+            "instabilidade",
             "problema"
         ],
 
@@ -51,56 +51,42 @@ export class TicketClassifier {
     }
     classify(description: string) {
 
-    const normalizedDescription = description.toLowerCase();
-
-    const channel = this.classifyChannel(normalizedDescription);
-
-    const priority = this.classifyPriority(normalizedDescription);
-
-    const manualReview = this.needsManualReview(channel);
-
-        return {channel, priority, manualReview };
+        const normalizedDescription = description.toLowerCase();
+        const channel = this.classifyChannel(normalizedDescription);
+        const priority = this.classifyPriority(normalizedDescription);
+        const manualReview = this.needsManualReview(channel);
+        return { channel, priority, manualReview };
     }
+
     private classifyChannel(description: string): Canal {
-        const normalizedDescription = description.toLowerCase();
-
-    for (const channel in this.channelKeywords) {
-
-        const keywords =
-            this.channelKeywords[channel as keyof typeof this.channelKeywords];
-
-        for (const keyword of keywords) {
-
-            if (description.includes(keyword)) {
-                return channel as Canal;
+        for (const channel in this.channelKeywords) {
+            const keywords =
+                this.channelKeywords[channel as keyof typeof this.channelKeywords];
+            for (const keyword of keywords) {
+                if (description.includes(keyword)) {
+                    return channel as Canal;
+                }
             }
-
         }
-
+        return Canal.FORA_DO_ESCOPO
     }
-    return Canal.FORA_DO_ESCOPO;
-}
-    
-    private classifyPriority(description: string): Prioridade { 
-        const normalizedDescription = description.toLowerCase();
+
+    private classifyPriority(description: string): Prioridade {
         for (const keyword of this.priorityKeywords.ALTA) {
             if (description.includes(keyword)) {
-                return Prioridade.ALTA;
+                return Prioridade.ALTA
             }
         }
         for (const keyword of this.priorityKeywords.MEDIA) {
             if (description.includes(keyword)) {
-                return Prioridade.MEDIA;
+                return Prioridade.MEDIA
             }
         }
         return Prioridade.BAIXA;
     }
     private needsManualReview(channel: Canal): boolean {
-    
-        
-
-        return channel === Canal.FORA_DO_ESCOPO;
+        return channel === Canal.FORA_DO_ESCOPO
     }
-    
+
 }
 

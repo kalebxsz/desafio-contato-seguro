@@ -1,25 +1,28 @@
 import prisma from "../lib/prisma";
+import bcrypt from 'bcryptjs';
 
 export class UserService {
 
     async create(name: string, email: string, password: string) {
         try {
-    const user = await prisma.user.create({
-        data: {
-            name,
-            email,
-            password
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            const user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword
+                }
+            })
+            const { password: _, ...userWithoutPassword } = user;
+            return userWithoutPassword
         }
-    })
-    
-    return user
-}
-    
- catch (error: any) {
-    if(error.code === "P2002"){
-        throw new Error("EMAIL_ALREADY_EXISTS")
-    }
-}
+
+        catch (error: any) {
+            if (error.code === "P2002") {
+                throw new Error("EMAIL_ALREADY_EXISTS")
+            }
+        }
     }
     async findMany() {
         return await prisma.user.findMany();

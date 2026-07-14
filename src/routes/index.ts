@@ -6,8 +6,9 @@ const router = Router();
 
 
 
-router.get('/', (req, res)=>{
+router.get('/health', (req, res)=>{
     res.status(200).json({
+        status: 'OK',
         message: "Api ativa e funcionando corretamente!",
         date: new Date().toISOString()
     })
@@ -17,8 +18,5 @@ router.use("/users", userRoutes);
 
 router.use("/tickets", ticketRoutes);
 
-
-//rotas de tickets
-// router.use("/tickets", ticketRoutes);
 
 export default router;
