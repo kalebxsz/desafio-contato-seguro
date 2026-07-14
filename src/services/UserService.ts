@@ -3,16 +3,24 @@ import prisma from "../lib/prisma";
 export class UserService {
 
     async create(name: string, email: string, password: string) {
-        const user = await prisma.user.create({
-            data: {
-                name, 
-                email,
-                password
-            }
-        })
-        return user
+        try {
+    const user = await prisma.user.create({
+        data: {
+            name,
+            email,
+            password
+        }
+    })
+    
+    return user
+}
+    
+ catch (error: any) {
+    if(error.code === "P2002"){
+        throw new Error("EMAIL_ALREADY_EXISTS")
     }
-
+}
+    }
     async findMany() {
         return await prisma.user.findMany();
     }
@@ -28,10 +36,10 @@ export class UserService {
 
     async update(id: number, name: string, email: string, password: string) {
         const user = await prisma.user.update({
-            where:{
+            where: {
                 id
             },
-            data:{
+            data: {
                 name, email, password
             }
         })
@@ -42,10 +50,9 @@ export class UserService {
         const user = await prisma.user.delete({
             where: {
                 id
-            } 
+            }
         })
         return user
     }
-        
 
 }
