@@ -3,25 +3,20 @@ import app from "../../app";
 import prisma from "../../lib/prisma";
 
 describe("Ticket Integration", () => {
-
-    beforeEach(async () => {
-        await prisma.ticket.deleteMany();
-        await prisma.user.deleteMany();
-    });
-
     afterAll(async () => {
         await prisma.$disconnect();
     });
 
-    test("deve criar um ticket com sucesso", async () => {
+    const generateUniqueEmail = () => `kaleb+${Date.now()}${Math.floor(Math.random() * 1000)}@email.com`
 
+    test("deve criar um ticket com sucesso", async () => {
         const user = await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: generateUniqueEmail(),
                 password: "123456"
-            });
+            })
 
         const response = await request(app)
             .post("/tickets")
@@ -29,220 +24,199 @@ describe("Ticket Integration", () => {
                 title: "Erro no login",
                 description: "Estou recebendo erro ao acessar o sistema",
                 userId: user.body.id
-            });
+            })
 
-        expect(response.status).toBe(201);
-
-        expect(response.body).toHaveProperty("id");
-        expect(response.body.title).toBe("Erro no login");
-        expect(response.body.userId).toBe(user.body.id);
-
-    });
+        expect(response.status).toBe(201)
+        expect(response.body).toHaveProperty("id")
+        expect(response.body.title).toBe("Erro no login")
+        expect(response.body.userId).toBe(user.body.id)
+    })
 
     test("deve retornar 404 quando o usuário não existir", async () => {
+        const response = await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro",
+                description: "Erro ao acessar",
+                userId: 999999 
+            })
 
-    const response = await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro",
-            description: "Erro ao acessar",
-            userId: 999
-        });
+        expect(response.status).toBe(404);
+        expect(response.body.message).toBe("Usuário nao encontrado")
+    })
 
-    expect(response.status).toBe(404);
-    expect(response.body.message).toBe("Usuário nao encontrado");
+    test("deve retornar 400 quando campos obrigatórios não forem enviados", async () => {
+        const response = await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro"
+            })
 
-});
-test("deve retornar 400 quando campos obrigatórios não forem enviados", async () => {
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("Todos os campos são obrigatórios")
+    })
 
-    const response = await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro"
-        });
+    test("deve listar todos os tickets", async () => {
+        const user = await request(app)
+            .post("/users")
+            .send({
+                name: "Kaleb",
+                email: generateUniqueEmail(),
+                password: "123456"
+            })
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Todos os campos são obrigatórios");
+        await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro no login",
+                description: "Estou recebendo erro ao acessar o sistema",
+                userId: user.body.id
+            })
 
-});
+        const response = await request(app)
+            .get("/tickets")
 
+        expect(response.status).toBe(200)
+       
+        expect(response.body.length).toBeGreaterThanOrEqual(1);
+        
+        const ticketCriado = response.body.find((t: any) => t.userId === user.body.id)
+        expect(ticketCriado).toBeDefined();
+        expect(ticketCriado.title).toBe("Erro no login")
+        expect(ticketCriado.user.name).toBe("Kaleb")
+    });
 
-test("deve listar todos os tickets", async () => {
+    test("deve buscar um ticket pelo id", async () => {
+        const userEmail = generateUniqueEmail()
+        const user = await request(app)
+            .post("/users")
+            .send({
+                name: "Kaleb",
+                email: userEmail,
+                password: "123456"
+            })
 
-    const user = await request(app)
-        .post("/users")
-        .send({
-            name: "Kaleb",
-            email: "kaleb@email.com",
-            password: "123456"
-        });
+        const createdTicket = await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro no login",
+                description: "Estou recebendo erro ao acessar o sistema",
+                userId: user.body.id
+            })
 
-    await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro no login",
-            description: "Estou recebendo erro ao acessar o sistema",
-            userId: user.body.id
-        });
+        const response = await request(app)
+            .get(`/tickets/${createdTicket.body.id}`)
 
-    const response = await request(app)
-        .get("/tickets");
+        expect(response.status).toBe(200)
+        expect(response.body.id).toBe(createdTicket.body.id)
+        expect(response.body.title).toBe("Erro no login")
+        expect(response.body.user.email).toBe(userEmail)
+    })
 
-    expect(response.status).toBe(200);
+    test("deve retornar 404 quando o ticket não existir", async () => {
+        const response = await request(app)
+            .get("/tickets/999999")
 
-    expect(response.body).toHaveLength(1);
+        expect(response.status).toBe(404)
+        expect(response.body.message).toBe("Ticket não encontrado")
+    })
 
-    expect(response.body[0].title).toBe("Erro no login");
-    expect(response.body[0].user.name).toBe("Kaleb");
+    test("deve atualizar o status de um ticket", async () => {
+        const user = await request(app)
+            .post("/users")
+            .send({
+                name: "Kaleb",
+                email: generateUniqueEmail(),
+                password: "123456"
+            })
 
-});
+        const ticket = await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro no login",
+                description: "Estou recebendo erro ao acessar o sistema",
+                userId: user.body.id
+            })
 
-test("deve buscar um ticket pelo id", async () => {
+        const response = await request(app)
+            .patch(`/tickets/${ticket.body.id}/status`)
+            .send({
+                status: "EM_ANDAMENTO"
+            })
 
-    const user = await request(app)
-        .post("/users")
-        .send({
-            name: "Kaleb",
-            email: "kaleb@email.com",
-            password: "123456"
-        });
+        expect(response.status).toBe(200)
+        expect(response.body.status).toBe("EM_ANDAMENTO")
+    })
 
-    const createdTicket = await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro no login",
-            description: "Estou recebendo erro ao acessar o sistema",
-            userId: user.body.id
-        });
+    test("deve retornar 400 quando o status for inválido", async () => {
+        const user = await request(app)
+            .post("/users")
+            .send({
+                name: "Kaleb",
+                email: generateUniqueEmail(),
+                password: "123456"
+            })
 
-    const response = await request(app)
-        .get(`/tickets/${createdTicket.body.id}`);
+        const ticket = await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro",
+                description: "Erro ao acessar",
+                userId: user.body.id
+            })
 
-    expect(response.status).toBe(200);
+        const response = await request(app)
+            .patch(`/tickets/${ticket.body.id}/status`)
+            .send({
+                status: "STATUS_INVALIDO"
+            })
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("Status inválido.")
+    })
 
-    expect(response.body.id).toBe(createdTicket.body.id);
-    expect(response.body.title).toBe("Erro no login");
-    expect(response.body.user.email).toBe("kaleb@email.com");
+    test("deve retornar 400 quando o status não for informado", async () => {
+        const user = await request(app)
+            .post("/users")
+            .send({
+                name: "Kaleb",
+                email: generateUniqueEmail(),
+                password: "123456"
+            })
 
-});
+        const ticket = await request(app)
+            .post("/tickets")
+            .send({
+                title: "Erro",
+                description: "Erro ao acessar",
+                userId: user.body.id
+            })
+        const response = await request(app)
+            .patch(`/tickets/${ticket.body.id}/status`)
+            .send({});
 
-test("deve retornar 404 quando o ticket não existir", async () => {
+        expect(response.status).toBe(400)
+        expect(response.body.message).toBe("O status é obrigatório.")
+    });
 
-    const response = await request(app)
-        .get("/tickets/999");
+    test("deve retornar 400 quando o id for inválido", async () => {
+        const response = await request(app)
+            .patch("/tickets/abc/status")
+            .send({
+                status: "EM_ANDAMENTO"
+            })
 
-    expect(response.status).toBe(404);
+        expect(response.status).toBe(400)
+        expect(response.body.message).toBe("ID inválido.")
+    })
 
-    expect(response.body.message).toBe("Ticket não encontrado");
+    test("deve retornar 404 quando o ticket não existir ao atualizar o status", async () => {
+        const response = await request(app)
+            .patch("/tickets/999999/status")
+            .send({
+                status: "EM_ANDAMENTO"
+            })
 
-});
-test("deve atualizar o status de um ticket", async () => {
-
-    const user = await request(app)
-        .post("/users")
-        .send({
-            name: "Kaleb",
-            email: "kaleb@email.com",
-            password: "123456"
-        });
-
-    const ticket = await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro no login",
-            description: "Estou recebendo erro ao acessar o sistema",
-            userId: user.body.id
-        });
-
-    const response = await request(app)
-        .patch(`/tickets/${ticket.body.id}/status`)
-        .send({
-            status: "EM_ANDAMENTO"
-        });
-
-    expect(response.status).toBe(200);
-
-    expect(response.body.status).toBe("EM_ANDAMENTO");
-
-});
-test("deve retornar 400 quando o status for inválido", async () => {
-
-    const user = await request(app)
-        .post("/users")
-        .send({
-            name: "Kaleb",
-            email: "kaleb@email.com",
-            password: "123456"
-        });
-
-    const ticket = await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro",
-            description: "Erro ao acessar",
-            userId: user.body.id
-        });
-
-    const response = await request(app)
-        .patch(`/tickets/${ticket.body.id}/status`)
-        .send({
-            status: "STATUS_INVALIDO"
-        });
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Status inválido.");
-
-});
-
-test("deve retornar 400 quando o status não for informado", async () => {
-
-    const user = await request(app)
-        .post("/users")
-        .send({
-            name: "Kaleb",
-            email: "kaleb@email.com",
-            password: "123456"
-        });
-
-    const ticket = await request(app)
-        .post("/tickets")
-        .send({
-            title: "Erro",
-            description: "Erro ao acessar",
-            userId: user.body.id
-        });
-
-    const response = await request(app)
-        .patch(`/tickets/${ticket.body.id}/status`)
-        .send({});
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("O status é obrigatório.");
-
-});
-test("deve retornar 400 quando o id for inválido", async () => {
-
-    const response = await request(app)
-        .patch("/tickets/abc/status")
-        .send({
-            status: "EM_ANDAMENTO"
-        });
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("ID inválido.");
-
-});
-test("deve retornar 404 quando o ticket não existir ao atualizar o status", async () => {
-
-    const response = await request(app)
-        .patch("/tickets/999/status")
-        .send({
-            status: "EM_ANDAMENTO"
-        });
-
-    expect(response.status).toBe(404);
-
-    expect(response.body.message).toBe("Ticket não encontrado.");
-
-});
-});
+        expect(response.status).toBe(404);
+        expect(response.body.message).toBe("Ticket não encontrado.")
+    })
+})

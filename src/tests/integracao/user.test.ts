@@ -1,133 +1,118 @@
-import request from "supertest";
-import app from "../../app";
-import prisma from "../../lib/prisma";
+import request from "supertest"
+import app from "../../app"
+import prisma from "../../lib/prisma"
 
 describe("User Integration", () => {
-
-    beforeEach(async () => {
-        await prisma.ticket.deleteMany()
-        await prisma.user.deleteMany()
-    });
-
     afterAll(async () => {
-        await prisma.$disconnect();
+        await prisma.$disconnect()
     });
+    const generateUniqueEmail = () => `kaleb+${Date.now()}${Math.floor(Math.random() * 1000)}@email.com`
 
     test("deve criar um usuário com sucesso", async () => {
-
+        const userEmail = generateUniqueEmail()
         const response = await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: userEmail,
                 password: "123456"
-            });
+            })
 
-        expect(response.status).toBe(201);
-
-        expect(response.body).toHaveProperty("id");
-        expect(response.body.name).toBe("Kaleb");
-        expect(response.body.email).toBe("kaleb@email.com");
-
-    });
+        expect(response.status).toBe(201)
+        expect(response.body).toHaveProperty("id")
+        expect(response.body.name).toBe("Kaleb")
+        expect(response.body.email).toBe(userEmail)
+    })
 
     test("não deve permitir cadastrar dois usuários com o mesmo email", async () => {
-
+        const sharedEmail = generateUniqueEmail()
         await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: sharedEmail,
                 password: "123456"
-            });
-
+            })
         const response = await request(app)
             .post("/users")
             .send({
                 name: "Outro Usuário",
-                email: "kaleb@email.com",
+                email: sharedEmail,
                 password: "654321"
             });
-
         expect(response.status).toBe(409);
-        expect(response.body.message).toBe("Email já cadastrado");
+        expect(response.body.message).toBe("Email já cadastrado")
+    })
 
-    });
     test("deve retornar 400 quando nome, email ou senha não forem enviados", async () => {
-
         const response = await request(app)
             .post("/users")
             .send({
                 name: "Kaleb"
             });
 
-        expect(response.status).toBe(400);
-
-        expect(response.body.message).toBe(
-            "Nome, email e senha são obrigatórios"
-        );
-
+        expect(response.status).toBe(400)
+        expect(response.body.message).toBe("Nome, email e senha são obrigatórios")
     });
-
     
     test("deve listar todos os usuários", async () => {
+        const userEmail = generateUniqueEmail()
 
         await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: userEmail,
                 password: "123456"
-            });
+            })
 
         const response = await request(app)
-            .get("/users");
+            .get("/users")
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(200)
+        expect(response.body.length).toBeGreaterThanOrEqual(1)
 
-        expect(response.body).toHaveLength(1);
+        const userCriado = response.body.find((u: any) => u.email === userEmail);
+        expect(userCriado).toBeDefined();
+        expect(userCriado.name).toBe("Kaleb");
+    })
 
-        expect(response.body[0].name).toBe("Kaleb");
-
-    });
     test("deve buscar um usuário pelo id", async () => {
-
+        const userEmail = generateUniqueEmail()
         const created = await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: userEmail,
                 password: "123456"
-            });
+            })
 
         const response = await request(app)
-            .get(`/users/${created.body.id}`);
+            .get(`/users/${created.body.id}`)
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(200)
+        expect(response.body.id).toBe(created.body.id)
+        expect(response.body.name).toBe("Kaleb")
+        expect(response.body.email).toBe(userEmail)
+    })
 
-        expect(response.body.id).toBe(created.body.id);
-        expect(response.body.name).toBe("Kaleb");
-        expect(response.body.email).toBe("kaleb@email.com");
-
-    });
     test("deve retornar 404 quando usuário não existir", async () => {
-
         const response = await request(app)
-            .get("/users/999");
+            .get("/users/999999")
 
-        expect(response.status).toBe(404);
+        expect(response.status).toBe(404)
+        expect(response.body.message).toBe("Usuário não encontrado")
+    })
 
-        expect(response.body.message)
-            .toBe("Usuário não encontrado");
-
-    });
     test("deve atualizar um usuário", async () => {
+        const emailOriginal = generateUniqueEmail()
+        const emailAtualizado = generateUniqueEmail()
 
         const created = await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: emailOriginal,
                 password: "123456"
             });
 
@@ -135,38 +120,35 @@ describe("User Integration", () => {
             .put(`/users/${created.body.id}`)
             .send({
                 name: "Kaleb Gabriel",
-                email: "gabriel@email.com",
+                email: emailAtualizado, // Usa o novo email dinâmico
                 password: "654321"
             });
 
         expect(response.status).toBe(200);
-
-        expect(response.body.id).toBe(created.body.id);
-        expect(response.body.name).toBe("Kaleb Gabriel");
-        expect(response.body.email).toBe("gabriel@email.com");
-
+        expect(response.body.id).toBe(created.body.id)
+        expect(response.body.name).toBe("Kaleb Gabriel")
+        expect(response.body.email).toBe(emailAtualizado)
     });
-    test("deve deletar um usuário", async () => {
 
+    test("deve deletar um usuário", async () => {
+        const userEmail = generateUniqueEmail()
         const created = await request(app)
             .post("/users")
             .send({
                 name: "Kaleb",
-                email: "kaleb@email.com",
+                email: userEmail,
                 password: "123456"
-            });
+            })
 
         const response = await request(app)
-            .delete(`/users/${created.body.id}`);
+            .delete(`/users/${created.body.id}`)
 
         expect(response.status).toBe(200);
-
-        expect(response.body.id).toBe(created.body.id);
+        expect(response.body.id).toBe(created.body.id)
 
         const search = await request(app)
-            .get(`/users/${created.body.id}`);
+            .get(`/users/${created.body.id}`)
 
-        expect(search.status).toBe(404);
-
-    });
-});
+        expect(search.status).toBe(404)
+    })
+})
