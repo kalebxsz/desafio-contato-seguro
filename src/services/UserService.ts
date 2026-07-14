@@ -61,17 +61,14 @@ export class UserService {
 
     async update(id: number, name: string, email: string, password: string) {
         const user = await prisma.user.update({
-            where: {
-                id
-            },
-            data: {
-                name, email, password
-            }
-        })
+        where: { id },
+        data: { name, email, password }
+    })
+    const { password: _, ...userWithoutPassword } = user;
         if(!user){
             throw new Error("Usuário não encontrado")
         }
-        return user
+        return userWithoutPassword;
     }
 
     async delete(id: number) {
