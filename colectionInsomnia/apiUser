@@ -1,0 +1,43 @@
+name: apiUsers
+collection:
+  - url: http://localhost:3000/users
+    name: createUser
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "João Silva",
+          "email": "joao@email.com",
+          "password": "senha_segura"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+    
+  - url: http://localhost:3000/users/1
+    name: atualizarUsuario
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Kaleb",
+          "email": "kaleb@email.com",
+          "password": "Kaleb153$"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        
+  - url: http://localhost:3000/users
+    name: BuscarUsuarios
+    method: GET
+
+  - url: http://localhost:3000/users/1
+    name: BuscarUsuario:id
+    method: GET
+
+  - url: http://localhost:3000/users/3
+    name: DeletarUsuario
+    method: DELETE

@@ -77,6 +77,10 @@ export class UserService {
                 id
             }
         })
-        return user
+        const { password: _, ...userWithoutPassword } = user;
+        if(!user){
+            throw new Error("Usuário não encontrado")
+        }
+        return userWithoutPassword
     }
 }

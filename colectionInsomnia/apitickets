@@ -1,0 +1,37 @@
+name: apiTickets
+collection:
+  - url: http://localhost:3000/tickets/
+    name: CriarTicket
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+          "title": "Erro ao acessar plataforma",
+          "description": "Estou com erro ao tentar logar na minha conta desde ontem.",
+          "userId": 1
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - url: http://localhost:3000/tickets
+    name: buscarTickets
+    method: GET
+    
+  - url: http://localhost:3000/tickets/1/status
+    name: updateStatus
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "status": "FINALIZADO"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+  
+  - url: http://localhost:3000/tickets/1
+    name: BuscaUsuario:id
+    method: GET
