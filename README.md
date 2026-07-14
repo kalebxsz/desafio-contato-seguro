@@ -59,32 +59,30 @@ volumes:
 
 Crie um arquivo .env na raiz do projeto e adicione a URL de conexão com o seu banco de dados PostgreSQL. Exemplo:
 
-DATABASE_URL="postgresql://SEU_USUARIO:SUA_SENHA@localhost:5432/contato_seguro?schema=public"
+DATABASE_URL="postgresql://admin:desafiojunior11@localhost:5455/projetoticket?schema=public
 PORT=3000
 
 4. Rode as migrations do Prisma:
 Isso criará as tabelas User e Ticket automaticamente no banco de dados:
 
 Bash
-
 npx prisma migrate dev
 
-5. Inicie o servidor:
 
+5. Inicie o servidor:
 Bash
 npm run dev
 O servidor estará rodando em http://localhost:3000.
 
 🧪 Como rodar os testes
 A API possui testes unitários e de integração. Para rodá-los execute o comando:
-
 Bash
 npm run test
-Rotas e Exemplos de Requisição
-normalmente será: http://localhost:3000
-Health Check
 
 ==============================================================================================================
+
+Rotas e Exemplos de Requisição: normalmente será: http://localhost:3000
+Health Check
 
 GET /health
 http://localhost:3000/health

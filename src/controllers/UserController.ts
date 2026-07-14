@@ -38,7 +38,9 @@ export class UserController {
     //buscar usuarios 
     findAll = async (req: Request, res: Response)=> {
         const users = await this.userService.findMany();
-
+        if(!users){
+            return res.status(404)
+        }
         return res.status(200).json(users);
     }
     // busvar um usuario por id

@@ -43,7 +43,6 @@ export class UserService {
     }
 
     async findById(id: number) {
-        try {
         const user = await prisma.user.findUnique({
             where: { id: id },
             select: {
@@ -58,10 +57,6 @@ export class UserService {
             throw new Error("USER_NOT_FOUND");
         }
         return user;
-
-    } catch (error: any) {
-        throw new Error("Erro ao buscar usuário: " + error.message);
-    }
     }
 
     async update(id: number, name: string, email: string, password: string) {
@@ -73,6 +68,9 @@ export class UserService {
                 name, email, password
             }
         })
+        if(!user){
+            throw new Error("Usuário não encontrado")
+        }
         return user
     }
 

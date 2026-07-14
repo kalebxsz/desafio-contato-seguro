@@ -59,9 +59,9 @@ export class TicketClassifier {
     }
 
     private classifyChannel(description: string): Canal {
+
         for (const channel in this.channelKeywords) {
-            const keywords =
-                this.channelKeywords[channel as keyof typeof this.channelKeywords];
+            const keywords = this.channelKeywords[channel as keyof typeof this.channelKeywords];
             for (const keyword of keywords) {
                 if (description.includes(keyword)) {
                     return channel as Canal;
