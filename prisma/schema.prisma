@@ -48,7 +48,7 @@ model Ticket {
   title String
   description  String
   channel Canal
-  priority Prioridade
+  priority Prioridade  @default(MEDIA)
   status Status @default(ABERTO)
   manualReview  Boolean @default(false)
   createdAt DateTime @default(now())

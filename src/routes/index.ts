@@ -1,6 +1,6 @@
 import { Router } from "express";
 import userRoutes from "./user.routes"
-
+import ticketRoutes from "./ticket.routes";
 
 const router = Router();
 
@@ -15,6 +15,7 @@ router.get('/', (req, res)=>{
 //rotas de usuários 
 router.use("/users", userRoutes);
 
+router.use("/tickets", ticketRoutes);
 
 
 //rotas de tickets
