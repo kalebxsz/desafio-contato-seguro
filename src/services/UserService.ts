@@ -5,8 +5,8 @@ export class UserService {
 
     async create(name: string, email: string, password: string) {
         try {
-            const saltRounds = 10;
-            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            const saltRounds = 10
+            const hashedPassword = await bcrypt.hash(password, saltRounds)
             const user = await prisma.user.create({
                 data: {
                     name,
@@ -14,7 +14,7 @@ export class UserService {
                     password: hashedPassword
                 }
             })
-            const { password: _, ...userWithoutPassword } = user;
+            const { password: _, ...userWithoutPassword } = user
             return userWithoutPassword
         }
 
@@ -25,16 +25,43 @@ export class UserService {
         }
     }
     async findMany() {
-        return await prisma.user.findMany();
+        try {
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        })
+        return users;
+
+    } catch (error: any) {
+        throw new Error("Erro ao buscar usuários: " + error.message);
+    }
     }
 
     async findById(id: number) {
+        try {
         const user = await prisma.user.findUnique({
-            where: {
-                id
+            where: { id: id },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                createdAt: true,
+                updatedAt: true
             }
         })
-        return user
+        if (!user) {
+            throw new Error("USER_NOT_FOUND");
+        }
+        return user;
+
+    } catch (error: any) {
+        throw new Error("Erro ao buscar usuário: " + error.message);
+    }
     }
 
     async update(id: number, name: string, email: string, password: string) {
@@ -57,5 +84,4 @@ export class UserService {
         })
         return user
     }
-
 }
