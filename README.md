@@ -55,7 +55,8 @@ services:
 volumes:
   postgres_data:
 
-
+rode o comando para criar o docker
+docker-compose up -d
 
 Crie um arquivo .env na raiz do projeto e adicione a URL de conexão com o seu banco de dados PostgreSQL. Exemplo:
 
